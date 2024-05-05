@@ -1,0 +1,46 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
+
+# Dosya yolları ve dosya isimleri
+url3 = "C:\\Users\\mehme\\OneDrive\\Masaüstü\\TEZ\\Test\\pito-tube-datas\\airspeedtest-3\\"
+file_3 = "2024-04-30 16-13-22.txt"
+
+# Verileri yükleme ve işleme
+l = []
+with open(url3 + file_3, "r") as data:
+    for line in data:
+        line = line.rstrip()
+        if "_vfr_hud_t airspeed" in line:
+            parts = line.split()
+            datetime_str = parts[0] + ' ' + parts[1]  # Tarih ve zamanı birleştir
+            airspeed = parts[12].replace(",", ".")
+            l.append([datetime_str, float(airspeed)])
+
+# DataFrame oluşturma ve datetime'a dönüştürme
+df = pd.DataFrame(l, columns=['DateTime', 'Airspeed'])
+df['DateTime'] = pd.to_datetime(df['DateTime'])
+
+# Belirli bir aralıkta örnekleme
+df_sampled = df.iloc[180::10]
+
+# Standart sapma hesaplaması
+std_dev = df_sampled['Airspeed'].std()
+
+# Hata çubukları ile plot
+fig, ax = plt.subplots()
+ax.errorbar(df_sampled['DateTime'], df_sampled['Airspeed'], yerr=std_dev, label='Airspeed SD', fmt='-o', ecolor='red', capsize=3)
+
+# Zaman formatı ve 30 saniyelik aralıklar
+ax.xaxis.set_major_locator(mdates.SecondLocator(interval=15))  # 30 saniyede bir göster
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))  # Saat:Dakika:Saniye formatı
+
+# Grafiğe başlık ve etiketler ekleme
+plt.title('Airspeed Over Time with Standard Deviation')
+plt.xlabel('Time')
+plt.ylabel('Airspeed')
+plt.xticks(rotation=45)
+plt.legend()
+plt.tight_layout()
+plt.show()
